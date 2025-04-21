@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: onerunning
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db/onerunning
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8000:8000"
+    command: /bin/bash -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
